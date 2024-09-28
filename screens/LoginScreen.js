@@ -28,7 +28,7 @@ const LoginScreen = ({ navigation }) => {
       await signInWithEmailAndPassword(auth, email, password);
       setLoading(false);
       Alert.alert('Success', 'Logged in successfully!');
-      navigation.navigate('Profile Creation'); // Adjust based on your navigation structure
+      navigation.navigate('Restaurant Discovery'); // Adjust based on your navigation structure
     } catch (error) {
       setLoading(false);
       let errorMessage = 'An error occurred during login.';
