@@ -45,7 +45,7 @@ const RegisterScreen = ({ navigation }) => {
 
       setLoading(false);
       Alert.alert('Success', 'Account created successfully!');
-      navigation.navigate('ProfileCreation'); // Redirect to Profile Creation after signup
+      navigation.navigate('User Onboarding'); // Redirect to Profile Creation after signup
     } catch (error) {
       setLoading(false);
       let errorMessage = 'An error occurred during registration.';

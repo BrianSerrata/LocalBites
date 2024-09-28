@@ -1,12 +1,43 @@
 // screens/RestaurantDiscoveryScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { Searchbar, Card, Paragraph, Button, Menu, IconButton, ActivityIndicator, Snackbar, Chip } from 'react-native-paper';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  TouchableOpacity, 
+  Dimensions 
+} from 'react-native';
+import { 
+  Searchbar, 
+  Card, 
+  Paragraph, 
+  Button, 
+  Menu, 
+  IconButton, 
+  ActivityIndicator, 
+  Snackbar, 
+  Chip 
+} from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { firestore, auth } from '../firebase';
-import { collection, query, getDocs, orderBy, limit, where, startAfter, updateDoc, doc, getDoc, arrayUnion } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  getDocs, 
+  orderBy, 
+  limit, 
+  where, 
+  startAfter, 
+  updateDoc, 
+  doc, 
+  getDoc 
+} from 'firebase/firestore';
 import * as Location from 'expo-location';
-import { Rating } from 'react-native-elements'; // Assuming you have react-native-elements installed
+import { Rating } from 'react-native-elements'; // Ensure you have react-native-elements installed
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
+const { width } = Dimensions.get('window');
 
 const RestaurantDiscoveryScreen = ({ navigation }) => {
   const [restaurants, setRestaurants] = useState([]);
@@ -171,56 +202,64 @@ const RestaurantDiscoveryScreen = ({ navigation }) => {
   };
 
   const renderRestaurantItem = ({ item }) => (
-    <Card style={styles.card}>
-      <Card.Cover
-        source={{
-          uri: item.logo || 'https://via.placeholder.com/150',
-        }}
-      />
-      <Card.Content>
-        <Text style={styles.restaurantName}>{item.restaurantName}</Text>
-        <View style={styles.tagsContainer}>
-          {item.tags && item.tags.map((tag, index) => (
-            <Chip key={index} style={styles.chip}>
-              {tag}
-            </Chip>
-          ))}
-        </View>
-        <Paragraph numberOfLines={2}>{item.description}</Paragraph>
-        <View style={styles.ratingContainer}>
-          <Rating
-            readonly
-            startingValue={item.rating || 0}
-            imageSize={20}
-            style={styles.rating}
-          />
-          <Text style={styles.reviewCount}>({item.reviewCount || 0})</Text>
-        </View>
-        {userLocation && item.address && item.address.latitude && item.address.longitude && (
-          <Text style={styles.distance}>
-            {calculateDistance(
-              userLocation.latitude,
-              userLocation.longitude,
-              item.address.latitude,
-              item.address.longitude
-            )} km away
-          </Text>
-        )}
-      </Card.Content>
-      <Card.Actions>
-        <Button onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: item.id })}>
-          View Details
-        </Button>
-        <IconButton
-          icon={favorites.includes(item.id) ? 'heart' : 'heart-outline'}
-          color={favorites.includes(item.id) ? 'red' : 'gray'}
-          size={24}
-          onPress={() => toggleFavorite(item.id)}
-          accessibilityLabel={favorites.includes(item.id) ? 'Remove from favorites' : 'Add to favorites'}
-          accessibilityHint={`Marks ${item.restaurantName} as favorite`}
+    <TouchableOpacity 
+      onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: item.id })}
+      activeOpacity={0.8} // Provides a subtle feedback on tap
+      style={styles.cardContainer}
+    >
+      <Card style={styles.card}>
+        <Card.Cover
+          source={{
+            uri: item.logo || 'https://via.placeholder.com/150',
+          }}
+          style={styles.cardCover}
         />
-      </Card.Actions>
-    </Card>
+        {/* Favorite Icon */}
+        <TouchableOpacity
+          style={styles.favoriteIcon}
+          onPress={() => toggleFavorite(item.id)}
+          activeOpacity={0.7}
+        >
+          <MaterialCommunityIcons
+            name={favorites.includes(item.id) ? 'heart' : 'heart-outline'}
+            color={favorites.includes(item.id) ? 'red' : 'black'} // Red when favorited, black otherwise
+            size={28}
+          />
+        </TouchableOpacity>
+        <Card.Content style={styles.cardContent}>
+          <Text style={styles.restaurantName}>{item.restaurantName}</Text>
+          <View style={styles.tagsContainer}>
+            {item.tags && item.tags.map((tag, index) => (
+              <Chip key={index} style={styles.chip}>
+                {tag}
+              </Chip>
+            ))}
+          </View>
+          <Paragraph numberOfLines={2} style={styles.description}>
+            {item.description}
+          </Paragraph>
+          <View style={styles.ratingContainer}>
+            <Rating
+              readonly
+              startingValue={item.rating || 0}
+              imageSize={20}
+              style={styles.rating}
+            />
+            <Text style={styles.reviewCount}>({item.reviewCount || 0})</Text>
+          </View>
+          {userLocation && item.address && item.address.latitude && item.address.longitude && (
+            <Text style={styles.distance}>
+              {calculateDistance(
+                userLocation.latitude,
+                userLocation.longitude,
+                item.address.latitude,
+                item.address.longitude
+              )} km away
+            </Text>
+          )}
+        </Card.Content>
+      </Card>
+    </TouchableOpacity>
   );
 
   const filteredRestaurants = restaurants.filter(restaurant =>
@@ -237,7 +276,7 @@ const RestaurantDiscoveryScreen = ({ navigation }) => {
 
   return (
     <LinearGradient
-      colors={['#E0C3FC', '#8EC5FC']}
+      colors={['#fbc2eb', '#a6c1ee']} // Gradient colors matching Next.js aesthetic
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
@@ -252,7 +291,14 @@ const RestaurantDiscoveryScreen = ({ navigation }) => {
             visible={filterVisible}
             onDismiss={() => setFilterVisible(false)}
             anchor={
-              <Button mode="outlined" onPress={() => setFilterVisible(true)}>
+              <Button 
+                mode="contained" 
+                onPress={() => setFilterVisible(true)}
+                textColor="white"
+                buttonColor='black'
+                contentStyle={styles.menuButtonContent}
+                style={styles.menuButton}
+              >
                 Filters
               </Button>
             }
@@ -270,7 +316,14 @@ const RestaurantDiscoveryScreen = ({ navigation }) => {
             visible={sortVisible}
             onDismiss={() => setSortVisible(false)}
             anchor={
-              <Button mode="outlined" onPress={() => setSortVisible(true)}>
+              <Button 
+                mode="contained" 
+                onPress={() => setSortVisible(true)}
+                textColor="white"
+                buttonColor='black'
+                contentStyle={styles.menuButtonContent}
+                style={styles.menuButton}
+              >
                 Sort By: {sortOption}
               </Button>
             }
@@ -289,12 +342,14 @@ const RestaurantDiscoveryScreen = ({ navigation }) => {
           style={styles.searchBar}
           accessibilityLabel="Search Bar"
           accessibilityHint="Enter restaurant name to search"
+          inputStyle={{ color: 'black' }} // Change input text color to black
+          placeholderTextColor="#999" // Optional: Change placeholder color
         />
 
         {/* Loading Indicator */}
         {loading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0000ff" />
+            <ActivityIndicator size="large" color="#6200ee" />
           </View>
         )}
 
@@ -307,7 +362,7 @@ const RestaurantDiscoveryScreen = ({ navigation }) => {
             contentContainerStyle={styles.listContainer}
             onEndReached={() => fetchRestaurants(true)}
             onEndReachedThreshold={0.5}
-            ListFooterComponent={loadingMore ? <ActivityIndicator size="large" /> : null}
+            ListFooterComponent={loadingMore ? <ActivityIndicator size="large" color="#6200ee" /> : null}
             refreshing={refreshing}
             onRefresh={onRefresh}
             getItemLayout={(data, index) => (
@@ -344,30 +399,58 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28, // Increased font size for title
     fontWeight: 'bold',
     textAlign: 'center',
     marginVertical: 16,
-    color: '#333',
+    color: 'black', // Ensure title text is black
   },
   filterSortContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 16,
   },
+  menuButtonContent: {
+    height: 48,
+  },
+  menuButton: {
+    borderColor: 'black',
+    borderWidth: 1,
+  },
   searchBar: {
     marginBottom: 16,
+    backgroundColor: '#fff',
+    elevation: 2,
   },
   listContainer: {
     paddingBottom: 16,
   },
-  card: {
+  cardContainer: {
     marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 3,
+  },
+  card: {
+    backgroundColor: '#fff',
+  },
+  cardCover: {
+    height: 200,
+  },
+  favoriteIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 1,
+  },
+  cardContent: {
+    paddingTop: 8,
   },
   restaurantName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
+    color: 'black', // Ensure restaurant name is black
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -377,11 +460,16 @@ const styles = StyleSheet.create({
   chip: {
     marginRight: 4,
     marginBottom: 4,
+    backgroundColor: '#e0e0e0', // Light gray background for chips
+  },
+  description: {
+    fontSize: 14,
+    color: '#333', // Dark gray for better readability
+    marginBottom: 8,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
   },
   rating: {
     marginRight: 8,
@@ -397,7 +485,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
   },
 });
 
