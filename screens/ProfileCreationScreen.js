@@ -140,10 +140,10 @@ const ProfileCreationScreen = ({ navigation }) => {
 
   return (
     <LinearGradient
-      colors={['#E0EAFC', '#CFDEF3']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient} // Apply gradient style
+    colors={['#E0C3FC', '#8EC5FC']}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }}
+    style={styles.gradient}
     >
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Create Your Restaurant Profile</Text>

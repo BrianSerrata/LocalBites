@@ -1,17 +1,25 @@
 // screens/RegisterScreen.js
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // Import necessary methods
+import { 
+  View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity 
+} from 'react-native';
+import { TextInput, Button } from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient';
+import { auth, firestore } from '../firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const onRegisterPress = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
     // Basic validation
-    if (!email || !password || !confirmPassword) {
+    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
       Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
@@ -21,88 +29,159 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
 
-    const auth = getAuth(); // Get the auth instance
-    createUserWithEmailAndPassword(auth, email, password) // Use the register function
-      .then((response) => {
-        const uid = response.user.uid;
-        // Optionally, you can save additional user data to your database here
-        navigation.navigate('Profile Creation', { userId: uid });
-      })
-      .catch((error) => {
-        Alert.alert('Registration Error', error.message);
+    setLoading(true);
+
+    try {
+      // Firebase sign-up
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Optionally, create a user document in Firestore
+      await setDoc(doc(firestore, 'users', user.uid), {
+        email: user.email,
+        createdAt: new Date(),
+        // Add more user-related fields as needed
       });
+
+      setLoading(false);
+      Alert.alert('Success', 'Account created successfully!');
+      navigation.navigate('ProfileCreation'); // Redirect to Profile Creation after signup
+    } catch (error) {
+      setLoading(false);
+      let errorMessage = 'An error occurred during registration.';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already in use.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password should be at least 6 characters.';
+      }
+      Alert.alert('Registration Failed', errorMessage);
+      console.error('Registration Error:', error);
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
-      
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={(text) => setEmail(text)}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        style={styles.input}
-      />
+    <LinearGradient
+      colors={['#E0C3FC', '#8EC5FC']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Register</Text>
+        <Text style={styles.subtitle}>Create your account to get started</Text>
 
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={(text) => setPassword(text)}
-        secureTextEntry
-        style={styles.input}
-      />
+        {/* Email Input */}
+        <TextInput
+          label="Email"
+          value={email}
+          onChangeText={text => setEmail(text)}
+          style={styles.input}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          mode="outlined"
+          left={<TextInput.Icon name="email" />}
+        />
 
-      <TextInput
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={(text) => setConfirmPassword(text)}
-        secureTextEntry
-        style={styles.input}
-      />
+        {/* Password Input */}
+        <TextInput
+          label="Password"
+          value={password}
+          onChangeText={text => setPassword(text)}
+          style={styles.input}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+          mode="outlined"
+          left={<TextInput.Icon name="lock" />}
+        />
 
-      <Button title="Register" onPress={onRegisterPress} />
+        {/* Confirm Password Input */}
+        <TextInput
+          label="Confirm Password"
+          value={confirmPassword}
+          onChangeText={text => setConfirmPassword(text)}
+          style={styles.input}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+          mode="outlined"
+          left={<TextInput.Icon name="lock" />}
+        />
 
-      <View style={styles.footer}>
-        <Text>Already have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.link}>Login</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        {/* Register Button */}
+        <Button
+          mode="contained"
+          onPress={handleRegister}
+          style={styles.button}
+          loading={loading}
+          disabled={loading}
+          contentStyle={styles.buttonContent}
+        >
+          Register
+        </Button>
+
+        {/* Navigation to Login */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.footerLink}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </LinearGradient>
   );
 };
 
+export default RegisterScreen;
+
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+  },
+  container: {
+    padding: 24,
+    flexGrow: 1,
     justifyContent: 'center',
   },
   title: {
-    fontSize: 32,
-    marginBottom: 30,
-    alignSelf: 'center',
+    fontSize: 28,
     fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   input: {
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    marginBottom: 15,
-    paddingHorizontal: 10,
-    borderRadius: 5,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+  },
+  button: {
+    marginTop: 8,
+    borderRadius: 8,
+  },
+  buttonContent: {
+    paddingVertical: 8,
   },
   footer: {
-    marginTop: 20,
     flexDirection: 'row',
     justifyContent: 'center',
+    marginTop: 16,
   },
-  link: {
-    color: '#1e90ff',
+  footerText: {
+    fontSize: 16,
+    color: '#555',
+  },
+  footerLink: {
+    fontSize: 16,
+    color: '#1E90FF',
+    fontWeight: 'bold',
   },
 });
-
-export default RegisterScreen;
