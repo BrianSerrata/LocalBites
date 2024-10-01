@@ -1,1 +1,1 @@
-# LocalBites
+LocalBites is a mobile app designed to help local businesses, particularly restaurants, establish an online presence with ease. With a focus on simplicity, the app allows owners to quickly create profiles showcasing their location, menu, and pricing. By offering a streamlined platform, LocalBites aims to connect users with local dining spots while fostering a sense of community through personalized stories from business owners.
